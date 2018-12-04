@@ -4,6 +4,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from models.senet import *
 from statistics import mean
+import gc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=10)
@@ -31,7 +32,8 @@ train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=batch_size, shuffle=True, collate_fn=my_collate
 )
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 model = se_resnet18(120).to(device)
 
 criterion = nn.CrossEntropyLoss().to(device)
@@ -40,7 +42,7 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
 def run(epoch):
     running_loss = 0.0
-    top5_acc = []
+    top5_acc,top1_acc = [],[]
     for batch_num, (inputs, labels) in enumerate(train_loader):
         # print('Batch: ',inputs[0],labels)
         model.train()
@@ -57,8 +59,17 @@ def run(epoch):
 
         model.eval()
         top5 = torch.topk(outputs,k=5)[1]
+        top1 = torch.topk(outputs,k=1)[1]
         top5_acc.append(mean([int(label.item() in top5[i]) for i,label in enumerate(labels)]))
-        print (mean(top5_acc))
+        top1_acc.append(mean([int(label.item() in top1[i]) for i,label in enumerate(labels)]))
+
+        if batch_num % 10 == 0:
+            print (epoch, batch_num, running_loss, mean(top5_acc))
+            running_loss = 0.0
+
+    torch.save(model.state_dict(), f'checkpoint/model.{epoch}')
+    gc.collect()
+    torch.cuda.empty_cache()
 
 for epoch in range(10):
     run(epoch)
