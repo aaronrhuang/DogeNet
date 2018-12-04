@@ -22,14 +22,19 @@ def my_collate(batch):
     target = torch.LongTensor(target)
     return [data, target]
 
-data_root = 'train/'
+train_root = 'train/'
+val_root = 'val/'
 base_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.5]*3, [0.5]*3)
     ])
-train_dataset = datasets.ImageFolder(root=data_root, transform=base_transform)
+train_dataset = datasets.ImageFolder(root=train_root, transform=base_transform)
+val_dataset = datasets.ImageFolder(root=val_root, transform=base_transform)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=batch_size, shuffle=True, collate_fn=my_collate
+)
+val_loader = torch.utils.data.DataLoader(
+    val_dataset, batch_size=batch_size, shuffle=True, collate_fn=my_collate
 )
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -63,9 +68,22 @@ def run(epoch):
         top5_acc.append(mean([int(label.item() in top5[i]) for i,label in enumerate(labels)]))
         top1_acc.append(mean([int(label.item() in top1[i]) for i,label in enumerate(labels)]))
 
-        if batch_num % 10 == 0:
-            print (epoch, batch_num, running_loss, mean(top5_acc))
+        if batch_num % 50 == 0:
+            print (epoch, batch_num, running_loss, mean(top5_acc), mean(top1_acc))
             running_loss = 0.0
+
+    model.eval()
+    for batch_num, (inputs, labels) in enumerate(val_loader):
+        inputs,labels = torch.stack(inputs).to(device), labels.to(device)
+        outputs = model(inputs)
+        top5 = torch.topk(outputs,k=5)[1]
+        top1 = torch.topk(outputs,k=1)[1]
+        top5_val.append(mean([int(label.item() in top5[i]) for i,label in enumerate(labels)]))
+        top1_val.append(mean([int(label.item() in top1[i]) for i,label in enumerate(labels)]))
+        val_loss.append(criterion(outputs, labels).to(device).item())
+
+    print('VAL:', epoch, mean(top1_val), mean(top5_val))
+    sceduler.step(mean(val_loss))
 
     torch.save(model.state_dict(), f'checkpoint/model.{epoch}')
     gc.collect()
