@@ -90,5 +90,5 @@ def run(epoch):
     gc.collect()
     torch.cuda.empty_cache()
 
-for epoch in range(20):
+for epoch in range(12,15):
     run(epoch)
