@@ -71,7 +71,7 @@ def run(epoch):
         if batch_num % 50 == 0:
             print (epoch, batch_num, running_loss, mean(top5_acc), mean(top1_acc))
             running_loss = 0.0
-
+    top5_val, top1_val, val_loss = [],[],[]
     model.eval()
     for batch_num, (inputs, labels) in enumerate(val_loader):
         inputs,labels = torch.stack(inputs).to(device), labels.to(device)
@@ -83,11 +83,11 @@ def run(epoch):
         val_loss.append(criterion(outputs, labels).to(device).item())
 
     print('VAL:', epoch, mean(top1_val), mean(top5_val))
-    sceduler.step(mean(val_loss))
+    scheduler.step(mean(val_loss))
 
     torch.save(model.state_dict(), f'checkpoint/model.{epoch}')
     gc.collect()
     torch.cuda.empty_cache()
 
-for epoch in range(10):
+for epoch in range(20):
     run(epoch)
