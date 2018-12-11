@@ -76,7 +76,7 @@ def run(epoch):
 
         if batch_num % 50 == 0:
             print (epoch, batch_num, running_loss, mean(top5_acc), mean(top1_acc))
-            losses_f.write(f'{epoch} : {batch_num} : {running_loss} : {mean(top1_acc)} : {mean(top5_acc)}')
+            losses_f.write(f'{epoch} : {batch_num} : {running_loss} : {mean(top1_acc)} : {mean(top5_acc)}\n')
             running_loss = 0.0
         
         gc.collect()
@@ -94,7 +94,7 @@ def run(epoch):
         val_loss.append(criterion(outputs, labels).to(device).item())
 
     print('VAL:', epoch, mean(top1_val), mean(top5_val))
-    acc_f.write(f'{epoch} : {mean(top1_acc)} : {mean(top5_acc)} : {mean(top1_val)} : {mean(top5_val)}')
+    acc_f.write(f'{epoch} : {mean(top1_acc)} : {mean(top5_acc)} : {mean(top1_val)} : {mean(top5_val)}\n')
     scheduler.step(mean(val_loss))
 
     torch.save(model.state_dict(), f'checkpoint/model.{epoch}')
