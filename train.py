@@ -48,7 +48,7 @@ criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(model.parameters(), lr=params.lr, momentum=0.9, weight_decay = 5e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-losses_f = open('logs/losses2.txt','a')
+losses_f = open('logs/losses.txt','a')
 acc_f = open('logs/acc.txt', 'a')
 
 def run(epoch):
@@ -101,5 +101,5 @@ def run(epoch):
     gc.collect()
     torch.cuda.empty_cache()
 
-for epoch in range(checkpoint,checkpoint+num_epochs+1):
+for epoch in range(checkpoint+1,checkpoint+num_epochs+2):
     run(epoch)
